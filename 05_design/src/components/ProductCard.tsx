@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Product } from '../types/Product';
 
 interface ProductCardProps {
@@ -6,6 +6,7 @@ interface ProductCardProps {
   onView: (product: Product) => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onAddToCart: (productId: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -14,8 +15,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onView,
   onEdit,
   onDelete,
+  onAddToCart,
   loading
 }) => {
+  const [addingToCart, setAddingToCart] = useState(false);
+
+  const handleAddToCart = async () => {
+    try {
+      setAddingToCart(true);
+      await onAddToCart(product.id);
+    } catch (error) {
+      // Error handling is done in parent component
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   return (
     <div className="product-card">
       <h4 className="product-name">{product.name}</h4>
@@ -32,6 +47,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       <div className="product-actions">
+        <button
+          onClick={handleAddToCart}
+          className="action-button add-to-cart-button"
+          disabled={loading || addingToCart || product.stock === 0}
+          title={product.stock === 0 ? "Out of stock" : "Add to cart"}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-4m8 0V9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4" stroke="currentColor" strokeWidth="2"/>
+          </svg>
+          {addingToCart ? '...' : 'Cart'}
+        </button>
+
         <button
           onClick={() => onView(product)}
           className="action-button view-button"

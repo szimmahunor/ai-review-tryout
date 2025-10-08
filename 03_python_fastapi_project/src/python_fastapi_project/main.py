@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.python_fastapi_project.api.product_api import router as product_router
+from src.python_fastapi_project.api.cart_api import router as cart_router
 from src.python_fastapi_project.repository.database import database_lifespan
 from dotenv import load_dotenv
 
@@ -28,6 +29,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(product_router, prefix="/api")
+app.include_router(cart_router, prefix="/api")
 
 @app.get("/")
 async def root():

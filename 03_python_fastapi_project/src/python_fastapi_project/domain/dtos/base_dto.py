@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class BaseDTO(BaseModel):
     id: int
@@ -10,5 +11,5 @@ class BaseDTO(BaseModel):
 class BaseAuditDTO(BaseDTO):
     created_by: str
     created_at: datetime
-    updated_by: str
-    updated_at: datetime
+    updated_by: Optional[str] = None
+    updated_at: Optional[datetime] = None
