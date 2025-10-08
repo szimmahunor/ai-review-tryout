@@ -29,7 +29,6 @@ export const useCart = () => {
       setLoading(true);
       setError(null);
       const updatedCart = await CartService.addToCart(productId, quantity);
-      console.log(updatedCart);
       setCart(updatedCart);
       return updatedCart;
     } catch (err) {

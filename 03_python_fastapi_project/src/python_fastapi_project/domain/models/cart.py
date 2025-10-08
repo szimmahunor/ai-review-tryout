@@ -1,11 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import relationship
 from .base import BaseAudit
 
 class Cart(BaseAudit):
     __tablename__ = "carts"
 
-    session_id = Column(String(255), nullable=False, unique=True, index=True)
+    session_id = Column(String(255), nullable=False, unique=True)
 
     # Relationship to access cart items
     items = relationship("CartItem", back_populates="cart", cascade="all, delete-orphan")
@@ -20,3 +20,9 @@ class CartItem(BaseAudit):
     # Relationships
     cart = relationship("Cart", back_populates="items")
     product = relationship("Product")
+
+    # Table constraints
+    __table_args__ = (
+        UniqueConstraint('cart_id', 'product_id', name='uq_cart_product'),
+        CheckConstraint('quantity > 0', name='ck_positive_quantity'),
+    )

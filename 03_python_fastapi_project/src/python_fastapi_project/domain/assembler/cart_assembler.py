@@ -8,7 +8,7 @@ class CartAssembler:
     def to_cart_dto(cart: Cart) -> CartDTO:
         items = [CartAssembler.to_cart_item_dto(item) for item in cart.items]
         total_items = sum(item.quantity for item in items)
-        total_amount = sum(item.total_price for item in items)
+        total_amount = round(sum(item.total_price for item in items), 2)
 
         return CartDTO(
             id=cart.id,
@@ -24,7 +24,7 @@ class CartAssembler:
 
     @staticmethod
     def to_cart_item_dto(cart_item: CartItem) -> CartItemDTO:
-        total_price = float(cart_item.product.price) * cart_item.quantity
+        total_price = round(float(cart_item.product.price) * cart_item.quantity, 2)
 
         return CartItemDTO(
             id=cart_item.id,

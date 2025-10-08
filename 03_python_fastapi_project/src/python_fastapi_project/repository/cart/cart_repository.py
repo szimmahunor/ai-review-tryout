@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Optional
 
 from src.python_fastapi_project.domain.models.cart import Cart, CartItem
 

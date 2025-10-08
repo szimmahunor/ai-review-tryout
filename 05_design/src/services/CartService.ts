@@ -3,12 +3,35 @@ import type { Cart } from '../types/Cart';
 const API_BASE_URL = 'http://localhost:8000/api';
 const CART_SESSION_KEY = 'cart_session_id';
 
+// Backend response interfaces for type safety
+interface BackendCartItem {
+  id?: number;
+  cart_id?: number;
+  product_id?: number;
+  product_name: string;
+  product_price: number;
+  quantity: number;
+  total_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BackendCart {
+  id?: number;
+  session_id: string;
+  items?: BackendCartItem[];
+  total_items?: number;
+  total_amount?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Transform backend response to frontend format
-const transformCartResponse = (backendCart: any): Cart => {
+const transformCartResponse = (backendCart: BackendCart): Cart => {
   return {
     id: backendCart.id?.toString() || '',
     sessionId: backendCart.session_id,
-    items: backendCart.items?.map((item: any) => ({
+    items: backendCart.items?.map((item: BackendCartItem) => ({
       id: item.id?.toString() || '',
       cartId: item.cart_id?.toString() || '',
       productId: item.product_id?.toString() || '',
@@ -57,67 +80,88 @@ export class CartService {
     const sessionId = this.getOrCreateSessionId();
     const request = {
       session_id: sessionId,
-      product_id: productId,
+      product_id: Number(productId),
       quantity
     };
 
-    const response = await fetch(`${API_BASE_URL}/cart/add`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to add item to cart');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to add item to cart');
+      }
+
+      const backendCart = await response.json();
+      return transformCartResponse(backendCart);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error while adding item to cart');
     }
-
-    const backendCart = await response.json();
-    return transformCartResponse(backendCart);
   }
 
   static async removeFromCart(productId: string): Promise<Cart> {
     const sessionId = this.getOrCreateSessionId();
     const request = {
       session_id: sessionId,
-      product_id: productId
+      product_id: Number(productId)
     };
 
-    const response = await fetch(`${API_BASE_URL}/cart/remove`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/cart/remove`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to remove item from cart');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to remove item from cart');
+      }
+
+      const backendCart = await response.json();
+      return transformCartResponse(backendCart);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error while removing item from cart');
     }
-
-    const backendCart = await response.json();
-    return transformCartResponse(backendCart);
   }
 
-  static async getCart(): Promise<Cart | null> {
+  static async getCart(): Promise<Cart> {
     const sessionId = this.getOrCreateSessionId();
 
-    const response = await fetch(`${API_BASE_URL}/cart/${sessionId}`);
+    try {
+      const response = await fetch(`${API_BASE_URL}/cart/${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      // If cart doesn't exist (404), return null instead of throwing error
-      if (response.status === 404) {
-        return null;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to get cart');
       }
-      // For other errors, still throw
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch cart');
-    }
 
-    const backendCart = await response.json();
-    return transformCartResponse(backendCart);
+      const backendCart = await response.json();
+      return transformCartResponse(backendCart);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error while fetching cart');
+    }
   }
 }

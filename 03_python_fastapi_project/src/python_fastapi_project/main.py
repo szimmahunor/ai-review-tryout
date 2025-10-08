@@ -4,6 +4,7 @@ from src.python_fastapi_project.api.product_api import router as product_router
 from src.python_fastapi_project.api.cart_api import router as cart_router
 from src.python_fastapi_project.repository.database import database_lifespan
 from dotenv import load_dotenv
+import os
 
 # Load environment variables from .env file to os.getenv
 load_dotenv("configs/.env")
@@ -18,10 +19,11 @@ app = FastAPI(
     lifespan=database_lifespan
 )
 
-# Add CORS middleware
+# Add CORS middleware with secure configuration
+origins = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this for production
+    allow_origins=origins or ["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
