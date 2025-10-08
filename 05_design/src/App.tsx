@@ -2,7 +2,9 @@ import { useState } from 'react'
 import './App.css'
 import { useProducts } from './hooks/useProducts'
 import { useProductModals } from './hooks/useProductModals'
+import { useCart } from './hooks/useCart'
 import { ProductCard } from './components/ProductCard'
+import { Cart } from './components/Cart'
 import { AddProductModal } from './components/AddProductModal'
 import { EditProductModal } from './components/EditProductModal'
 import { ViewProductModal } from './components/ViewProductModal'
@@ -12,7 +14,8 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Use custom hooks for cleaner state management
-  const { products, loading, error, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, loading, error, createProduct, updateProduct, deleteProduct, fetchProducts } = useProducts();
+  const { cart, loading: cartLoading, error: cartError, addToCart, removeFromCart, totalItems, totalAmount } = useCart();
   const {
     isAddModalOpen,
     isEditModalOpen,
@@ -31,13 +34,36 @@ function App() {
     updateFormData
   } = useProductModals();
 
+  // Handle cart operations
+  const handleAddToCart = async (productId: string) => {
+    try {
+      await addToCart(productId, 1);
+      // Refresh products to update stock after adding to cart
+      await fetchProducts();
+    } catch (error) {
+      console.error('Failed to add product to cart:', error);
+      // You could add a toast notification here
+    }
+  };
+
+  const handleRemoveFromCart = async (productId: string) => {
+    try {
+      await removeFromCart(productId);
+      // Refresh products to update stock after removing from cart
+      await fetchProducts();
+    } catch (error) {
+      console.error('Failed to remove product from cart:', error);
+      // You could add a toast notification here
+    }
+  };
+
   // Handle form submissions with error handling
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await createProduct(formData);
       closeAddModal();
-    } catch (error) {
+    } catch {
       // Error is already handled by the hook, could add toast notification here
     }
   };
@@ -49,7 +75,7 @@ function App() {
     try {
       await updateProduct(selectedProduct.id, formData);
       closeEditModal();
-    } catch (error) {
+    } catch {
       // Error is already handled by the hook, could add toast notification here
     }
   };
@@ -60,7 +86,7 @@ function App() {
     try {
       await deleteProduct(selectedProduct.id);
       closeDeleteModal();
-    } catch (error) {
+    } catch {
       // Error is already handled by the hook, could add toast notification here
     }
   };
@@ -94,6 +120,13 @@ function App() {
           </div>
         )}
 
+        {/* Show cart error message if any */}
+        {cartError && (
+          <div style={{ color: 'red', marginBottom: '1rem', padding: '0.5rem', background: '#ffebee', borderRadius: '4px' }}>
+            Cart Error: {cartError}
+          </div>
+        )}
+
         <div className="header-controls">
           <div className="search-container">
             <div className="search-input-wrapper">
@@ -119,17 +152,33 @@ function App() {
           </button>
         </div>
 
-        <div className="products-grid">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onView={openViewModal}
-              onEdit={openEditModal}
-              onDelete={openDeleteModal}
-              loading={loading}
+        <div className="main-content">
+          <div className="products-section">
+            <div className="products-grid">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onView={openViewModal}
+                  onEdit={openEditModal}
+                  onDelete={openDeleteModal}
+                  onAddToCart={handleAddToCart}
+                  loading={loading}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="cart-section">
+            <Cart
+              cart={cart}
+              loading={cartLoading}
+              error={cartError}
+              onRemoveFromCart={handleRemoveFromCart}
+              totalItems={totalItems}
+              totalAmount={totalAmount}
             />
-          ))}
+          </div>
         </div>
 
         {/* Modal Components */}
